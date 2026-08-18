@@ -30,7 +30,7 @@ jobs:
       - name: Build staging debug APK
         id: gradle-build
         continue-on-error: true
-        run: ./gradlew assembleStagingDebug --no-daemon --stacktrace --info 2>&1 | tee gradle-build.log
+        run: set -o pipefail; ./gradlew :app:clean :app:assembleStagingDebug --no-daemon --stacktrace --rerun-tasks --info 2>&1 | tee gradle-build.log
       - name: Upload Gradle diagnostic log
         if: always()
         uses: actions/upload-artifact@v4
@@ -42,13 +42,13 @@ jobs:
         run: exit 1
       - name: Locate APK
         run: |
-          find app/build/outputs -type f -name '*.apk' -print
-          test -n "$(find app/build/outputs -type f -name '*.apk' -print -quit)"
+          find . -type f -name '*.apk' -print
+          test -n "$(find . -type f -name '*.apk' -print -quit)"
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kopipos-staging-debug
-          path: app/build/outputs/apk/**/*.apk
+          path: '**/*.apk'
           if-no-files-found: error
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -56,6 +56,6 @@ jobs:
           tag_name: v0.1.0-build.${{ github.run_number }}
           name: KopiPOS Native v0.1.0 build ${{ github.run_number }}
           generate_release_notes: true
-          files: app/build/outputs/apk/**/*.apk
+          files: '**/*.apk'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
