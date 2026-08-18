@@ -40,15 +40,18 @@ jobs:
       - name: Fail if Gradle build failed
         if: steps.gradle-build.outcome == 'failure'
         run: exit 1
-      - name: Locate APK
+      - name: Prepare APK release file
         run: |
-          find . -type f -name '*.apk' -print
-          test -n "$(find . -type f -name '*.apk' -print -quit)"
+          set -euo pipefail
+          APK="$(find app/build/outputs/apk -type f -name '*.apk' -print -quit)"
+          test -n "$APK"
+          cp "$APK" "KopiPOS-staging-debug.apk"
+          ls -lh "KopiPOS-staging-debug.apk"
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kopipos-staging-debug
-          path: '**/*.apk'
+          path: KopiPOS-staging-debug.apk
           if-no-files-found: error
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -56,6 +59,7 @@ jobs:
           tag_name: v0.1.0-build.${{ github.run_number }}
           name: KopiPOS Native v0.1.0 build ${{ github.run_number }}
           generate_release_notes: true
-          files: '**/*.apk'
+          fail_on_unmatched_files: true
+          files: KopiPOS-staging-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
