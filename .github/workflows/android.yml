@@ -18,12 +18,25 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: gradle
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Make Gradle executable
         run: chmod +x gradlew
       - name: Build staging debug APK
         run: ./gradlew assembleStagingDebug --no-daemon --stacktrace
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: kopipos-staging-debug
           path: app/build/outputs/apk/staging/debug/*.apk
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0-build.${{ github.run_number }}
+          name: KopiPOS Native v0.1.0 build ${{ github.run_number }}
+          generate_release_notes: true
+          files: app/build/outputs/apk/staging/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
