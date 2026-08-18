@@ -11,13 +11,14 @@ android { namespace = "com.kopipos.android"; compileSdk = 36
     buildFeatures { compose = true; buildConfig = true }
     buildTypes { release { isMinifyEnabled = false } }
     flavorDimensions += "env"
-    productFlavors { create("production") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"https://pos.example.invalid/api/\"") }; create("staging") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8310/api/\"") } }
+    productFlavors { create("production") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"https://pos.zorroserver.net/api/\"") }; create("staging") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8310/api/\"") } }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.09.00"))
     implementation("androidx.activity:activity-compose:1.11.0")
+    implementation("androidx.core:core-splashscreen:1.2.0")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")

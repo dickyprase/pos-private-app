@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.*
@@ -17,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kopipos.android.data.*
@@ -26,7 +28,7 @@ import java.util.UUID
 
 class MainActivity: ComponentActivity() {
  private val bt = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
- override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); setContent { KopiTheme { PosApp(bt) } } }
+ override fun onCreate(savedInstanceState: Bundle?) { installSplashScreen(); super.onCreate(savedInstanceState); setContent { KopiTheme { PosApp(bt) } } }
 }
 
 @Composable fun PosApp(permissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>) {
@@ -37,10 +39,11 @@ class MainActivity: ComponentActivity() {
 }
 
 @Composable fun LoginScreen(s: PosState, vm: PosViewModel) { var login by remember { mutableStateOf("") }; var pass by remember { mutableStateOf("") }
+ var showPassword by remember { mutableStateOf(false) }
  Surface(Modifier.fillMaxSize()) { Column(Modifier.padding(28.dp).fillMaxSize(), verticalArrangement=Arrangement.Center) {
   Text("KopiPOS", style=MaterialTheme.typography.displaySmall); Text("Kasir native", color=MaterialTheme.colorScheme.primary)
-  Spacer(Modifier.height(28.dp)); OutlinedTextField(login,{login=it},label={Text("Username / email")},modifier=Modifier.fillMaxWidth())
-  OutlinedTextField(pass,{pass=it},label={Text("Password")},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth())
+  Spacer(Modifier.height(28.dp)); OutlinedTextField(login,{login=it},label={Text("Username / email")},shape=MaterialTheme.shapes.large,modifier=Modifier.fillMaxWidth())
+  OutlinedTextField(pass,{pass=it},label={Text("Password")},shape=MaterialTheme.shapes.large,visualTransformation=if(showPassword) VisualTransformation.None else PasswordVisualTransformation(),trailingIcon={IconButton({showPassword=!showPassword}){Icon(if(showPassword)Icons.Default.VisibilityOff else Icons.Default.Visibility,"Tampilkan password")}},modifier=Modifier.fillMaxWidth())
   s.error?.let { Text(it,color=MaterialTheme.colorScheme.error,modifier=Modifier.padding(top=8.dp)) }
   Button({vm.login(login,pass)},enabled=!s.loading&&login.isNotBlank()&&pass.isNotBlank(),modifier=Modifier.fillMaxWidth().padding(top=18.dp)){Text(if(s.loading)"Masuk..." else "Masuk")}
  } }
