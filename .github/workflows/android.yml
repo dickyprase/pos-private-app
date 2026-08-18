@@ -25,7 +25,18 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
       - name: Build staging debug APK
-        run: ./gradlew assembleStagingDebug --no-daemon --stacktrace
+        id: gradle-build
+        continue-on-error: true
+        run: ./gradlew assembleStagingDebug --no-daemon --stacktrace --info 2>&1 | tee gradle-build.log
+      - name: Upload Gradle diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log-${{ github.run_number }}
+          path: gradle-build.log
+      - name: Fail if Gradle build failed
+        if: steps.gradle-build.outcome == 'failure'
+        run: exit 1
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
