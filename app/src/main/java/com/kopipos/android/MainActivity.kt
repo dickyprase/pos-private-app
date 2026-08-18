@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kopipos.android.data.*
-import com.kopipos.android.printer.*
+
 import com.kopipos.android.ui.theme.KopiTheme
 import java.util.UUID
 
@@ -46,6 +46,7 @@ class MainActivity: ComponentActivity() {
  } }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable fun PosScreen(s: PosState, vm: PosViewModel, launcher: androidx.activity.result.ActivityResultLauncher<Array<String>>) {
  var query by remember { mutableStateOf("") }; var cartOpen by remember { mutableStateOf(false) }
  val products=s.products.filter { it.name.contains(query,true)||it.sku.contains(query,true) }
@@ -55,7 +56,7 @@ class MainActivity: ComponentActivity() {
   LazyVerticalGrid(columns=GridCells.Adaptive(150.dp),contentPadding=PaddingValues(vertical=12.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) { items(products,key={it.id}) { p -> Card(onClick={if(s.shiftOpen)vm.add(p)},enabled=p.isAvailable){Column(Modifier.padding(12.dp)){Text(p.name,style=MaterialTheme.typography.titleMedium);Text(rupiah(p.basePrice),style=MaterialTheme.typography.titleSmall);if(!p.isAvailable)Text("Habis")}} } }
  }
  }
- if(cartOpen) ModalBottomSheet({cartOpen=false}) { CartSheet(s,vm) }
+ if(cartOpen) ModalBottomSheet(onDismissRequest={cartOpen=false}) { CartSheet(s,vm) }
 }
 @Composable fun CartSheet(s: PosState,vm:PosViewModel){ Column(Modifier.padding(20.dp).fillMaxWidth()){Text("Keranjang",style=MaterialTheme.typography.headlineSmall);LazyColumn{items(s.cart){i->Row(Modifier.fillMaxWidth().padding(vertical=8.dp),horizontalArrangement=Arrangement.SpaceBetween){Text("${i.quantity}x ${i.product.name}");Row{Text(rupiah(i.lineTotal));IconButton({vm.dec(i.product.id)}){Icon(Icons.Default.Remove,null)};IconButton({vm.add(i.product)}){Icon(Icons.Default.Add,null)}}}}};Text("Total ${rupiah(s.total)}",style=MaterialTheme.typography.titleLarge);Button({vm.checkout()},enabled=!s.loading,modifier=Modifier.fillMaxWidth()){Text("BAYAR")};s.error?.let{Text(it,color=MaterialTheme.colorScheme.error)}}}
 fun rupiah(n:Int)="Rp "+String.format("%,d",n).replace(',','.')
