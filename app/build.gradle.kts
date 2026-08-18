@@ -11,7 +11,7 @@ android { namespace = "com.kopipos.android"; compileSdk = 36
     buildFeatures { compose = true; buildConfig = true }
     buildTypes { release { isMinifyEnabled = false } }
     flavorDimensions += "env"
-    productFlavors { create("production") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"https://pos.zorroserver.net/api/\"") }; create("staging") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8310/api/\"") } }
+    productFlavors { create("production") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"https://pos.zorroserver.net/api/\"") }; create("staging") { dimension = "env"; buildConfigField("String", "BASE_URL", "\"https://pos.zorroserver.net/api/\"") } }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
 
