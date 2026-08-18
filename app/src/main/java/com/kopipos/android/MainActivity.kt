@@ -30,7 +30,7 @@ class MainActivity: ComponentActivity() {
 }
 
 @Composable fun PosApp(permissionLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>) {
- val vm: PosViewModel = viewModel(factory=PosViewModel.factory())
+ val vm: PosViewModel = viewModel()
  val s by vm.state.collectAsState()
  if (!s.loggedIn) LoginScreen(s, vm)
  else PosScreen(s, vm, permissionLauncher)
