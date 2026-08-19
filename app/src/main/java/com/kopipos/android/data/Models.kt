@@ -26,7 +26,7 @@ data class Shift(val id: Int, val status: String = "OPEN", val openingCash: Int 
 data class OrderRequest(val submission_token: String, val table_number: String?, val customer_name: String?, val order_type: String, val discount: Int, val items: List<OrderItemRequest>, val payment: PaymentRequest)
 data class OrderItemRequest(val product_id: Int, val quantity: Int, val modifier_ids: List<Int> = emptyList(), val notes: String? = null)
 data class PaymentRequest(val method: String, val received_amount: Int, val reference_number: String? = null)
-data class Order(val id: Int, val order_number: String = "", val grandTotal: Int = 0, val status: String = "", val createdAt: String? = null)
+data class Order(val id: Int, val orderNumber: String = "", val grandTotal: Int = 0, val status: String = "", val createdAt: String? = null)
 
 fun ProductDto.toDomain(baseUrl: String) = Product(id, name, sku, basePrice, isAvailable, categoryId, imagePath?.let { if (it.startsWith("http")) it else baseUrl.trimEnd('/') + "/storage/" + it.trimStart('/') })
 fun CategoryDto.toDomain() = Category(id, name)
