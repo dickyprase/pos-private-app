@@ -2,6 +2,7 @@ package com.kopipos.android
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +19,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,11 +56,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PosApp(permissions: ActivityResultLauncher<Array<String>>) {
     val vm: PosViewModel = viewModel()
     val state by vm.state.collectAsState()
-    if (!state.loggedIn) LoginScreen(state, vm) else when (state.page) {
+    if (state.loggedIn) BackHandler { if (state.page != PosPage.CASHIER) vm.back() }
+    if (!state.loggedIn) LoginScreen(state, vm) else AnimatedContent(targetState = state.page, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "page-transition") { page -> when (page) {
         PosPage.CASHIER -> CashierScreen(state, vm, permissions)
         PosPage.CART -> CartPage(state, vm)
         PosPage.CHECKOUT -> CheckoutScreen(state, vm)
@@ -63,7 +71,7 @@ fun PosApp(permissions: ActivityResultLauncher<Array<String>>) {
         PosPage.SHIFT -> ShiftScreen(state, vm)
         PosPage.MORE -> MoreScreen(state, vm)
         PosPage.PRINTER -> PrinterScreen(state, vm)
-    }
+    } }
 }
 
 @Composable
@@ -82,7 +90,7 @@ private fun LoginScreen(state: PosState, vm: PosViewModel) {
                 Icon(Icons.Default.CloudDone, null, tint = Green); Column(Modifier.padding(start = 10.dp)) { Text("Server terhubung", fontWeight = FontWeight.Bold); Text("pos.zorroserver.net", color = Muted, fontSize = 12.sp) }; Spacer(Modifier.weight(1f)); Icon(Icons.Default.ChevronRight, null, tint = Muted)
             }
             state.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 8.dp)) }
-            Button({ vm.login(login, password) }, enabled = !state.loading && login.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Orange)) { Text(if (state.loading) "MEMUAT..." else "MASUK", fontWeight = FontWeight.Bold) }
+            Button(onClick = { vm.login(login, password) }, enabled = !state.loading && login.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth().height(54.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Orange)) { if (state.loading) CircularProgressIndicator(Modifier.size(22.dp), color = Color.White, strokeWidth = 2.dp) else Text("MASUK", fontWeight = FontWeight.Bold) }
         }
     }
 }
@@ -97,7 +105,7 @@ private fun CashierScreen(state: PosState, vm: PosViewModel, permissions: Activi
     }, bottomBar = { Column { if (state.cart.isNotEmpty()) CartDock(state, onClick = { cartOpen = true }); BottomNav(state, vm) } }) { pad ->
         Column(Modifier.padding(pad).fillMaxSize()) {
             Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                StatusDot(Green); Text("Shift aktif", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp)); Spacer(Modifier.weight(1f)); Icon(Icons.Default.Print, null, tint = Green, modifier = Modifier.size(18.dp)); Text("RPP02N", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(start = 5.dp)); StatusDot(Green, Modifier.padding(start = 5.dp))
+                StatusDot(if (state.shift != null) Green else Muted); Text(if (state.shift != null) "Shift aktif" else "Shift belum dibuka", fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 6.dp)); Spacer(Modifier.weight(1f)); Icon(Icons.Default.Print, null, tint = Muted, modifier = Modifier.size(18.dp)); Text("Printer belum dipilih", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(start = 5.dp))
             }
             OutlinedTextField(query, { query = it }, modifier = Modifier.fillMaxWidth().padding(14.dp), placeholder = { Text("Cari menu / SKU") }, leadingIcon = { Icon(Icons.Default.Search, null) }, trailingIcon = { Icon(Icons.Default.Tune, null, tint = Muted) }, shape = RoundedCornerShape(16.dp), singleLine = true)
             Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -142,4 +150,4 @@ private fun CashierScreen(state: PosState, vm: PosViewModel, permissions: Activi
 @Composable private fun OrdersScreen(state: PosState, vm: PosViewModel) { Scaffold(topBar = { AppHeader("Riwayat Transaksi") }, bottomBar = { BottomNav(state, vm) }) { p -> LazyColumn(Modifier.padding(p).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) { if (state.orders.isEmpty()) item { Text("Belum ada transaksi.", color = Muted) }; items(state.orders.size) { index -> val order = state.orders[index]; Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) { Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) { Column(Modifier.weight(1f)) { Text("#${order.orderNumber}", fontWeight = FontWeight.Bold); Text(order.status, color = Green) }; Text(rupiah(order.grandTotal), color = Orange, fontWeight = FontWeight.Bold) } } } } } }
 @Composable private fun ShiftScreen(state: PosState, vm: PosViewModel) { Scaffold(topBar = { AppHeader("Shift") }, bottomBar = { BottomNav(state, vm) }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { if (state.shift == null) Text("Belum ada shift aktif", fontSize = 20.sp, fontWeight = FontWeight.Black) else { Text("Shift #${state.shift.id}", fontSize = 22.sp, fontWeight = FontWeight.Black); Text("Aktif", color = Green, fontWeight = FontWeight.Bold); Text("Kas awal ${rupiah(state.shift.openingCash)}") } } } }
 @Composable private fun MoreScreen(state: PosState, vm: PosViewModel) { var confirm by remember { mutableStateOf(false) }; Scaffold(topBar = { AppHeader("Lainnya") }, bottomBar = { BottomNav(state, vm) }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Akun Kasir", fontSize = 20.sp, fontWeight = FontWeight.Black); ListItem(headlineContent = { Text("Printer") }, supportingContent = { Text("RPP02N") }, leadingContent = { Icon(Icons.Default.Print, null) }, modifier = Modifier.clickable { vm.go(PosPage.PRINTER) }); ListItem(headlineContent = { Text("Server / Environment") }, supportingContent = { Text("Production") }, leadingContent = { Icon(Icons.Default.Cloud, null) }); HorizontalDivider(); TextButton({ confirm = true }) { Text("Logout", color = MaterialTheme.colorScheme.error) } } }; if (confirm) AlertDialog(onDismissRequest = { confirm = false }, title = { Text("Keluar dari akun?") }, text = { Text("Anda perlu masuk kembali untuk menggunakan aplikasi.") }, confirmButton = { TextButton({ vm.logout() }) { Text("KELUAR", color = MaterialTheme.colorScheme.error) } }, dismissButton = { TextButton({ confirm = false }) { Text("BATAL") } }) }
-@Composable private fun PrinterScreen(state: PosState, vm: PosViewModel) { Scaffold(topBar = { AppHeader("Printer") }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("RPP02N", fontSize = 24.sp, fontWeight = FontWeight.Black); Text("Terhubung", color = Green); Button({}, colors = ButtonDefaults.buttonColors(containerColor = Orange)) { Text("CETAK TEST") } } } }
+@Composable private fun PrinterScreen(state: PosState, vm: PosViewModel) { Scaffold(topBar = { AppHeader("Printer") }) { p -> Column(Modifier.padding(p).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("Printer thermal", fontSize = 24.sp, fontWeight = FontWeight.Black); Text("Belum terhubung", color = Muted); Text("Native Bluetooth RFCOMM belum tersedia di client ini.", color = Muted); OutlinedButton(onClick = {}, enabled = false) { Text("CETAK TEST") } } } }
