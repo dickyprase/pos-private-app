@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalConfiguration
 import android.content.res.Configuration
+import kotlinx.coroutines.launch
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -122,7 +123,7 @@ private fun CashierScreen(state: PosState, vm: PosViewModel, permissions: Activi
             }
         }
     }
-    if (cartOpen) ModalBottomSheet(onDismissRequest = { cartOpen = false }, skipPartiallyExpanded = true, containerColor = Color.White, dragHandle = { BottomSheetDefaults.DragHandle() }) { CartSheet(state, vm) }
+    if (cartOpen) ModalBottomSheet(onDismissRequest = { cartOpen = false }, containerColor = Color.White, dragHandle = { BottomSheetDefaults.DragHandle() }) { CartSheet(state, vm) }
 }
 
 @Composable private fun StatusDot(color: Color, modifier: Modifier = Modifier) { Box(modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color)) }
