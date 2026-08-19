@@ -11,4 +11,5 @@ interface PosApi {
     @POST("orders") suspend fun checkout(@Body body: OrderRequest): ApiEnvelope<OrderDto>
     @GET("orders") suspend fun orders(): ApiEnvelope<List<OrderDto>>
     @GET("orders/{id}") suspend fun order(@Path("id") id: Int): ApiEnvelope<OrderDto>
+    @Streaming @GET("orders/{id}/receipt/raw") suspend fun receiptRaw(@Path("id") id: Int): okhttp3.ResponseBody
 }

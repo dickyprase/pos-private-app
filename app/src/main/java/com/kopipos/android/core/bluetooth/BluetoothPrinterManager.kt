@@ -25,6 +25,11 @@ class BluetoothPrinterManager(private val context: Context) {
         try { socket?.close(); adapter?.cancelDiscovery(); socket = device.createRfcommSocketToServiceRecord(uuid); socket?.connect(); PrinterState.Connected(device.name ?: "Printer", device.address) }
         catch (e: Exception) { socket = null; PrinterState.Error("Gagal terhubung ke printer: ${e.message ?: "koneksi gagal"}") }
     }
+    suspend fun connectAddress(address: String): PrinterState = withContext(Dispatchers.IO) {
+        if (!hasConnectPermission()) return@withContext PrinterState.Error("Izin Bluetooth belum diberikan")
+        try { connect(adapter?.getRemoteDevice(address) ?: return@withContext PrinterState.Error("Bluetooth tidak tersedia")) }
+        catch (_: Exception) { PrinterState.Error("Printer tersimpan tidak tersedia") }
+    }
     suspend fun print(bytes: ByteArray): PrinterState = withContext(Dispatchers.IO) { try { socket?.outputStream?.write(bytes); socket?.outputStream?.flush(); PrinterState.Connected("Printer", socket?.remoteDevice?.address ?: "") } catch (e: Exception) { PrinterState.Error("Gagal mencetak: ${e.message ?: "printer offline"}") } }
     suspend fun testPrint(): PrinterState = print(byteArrayOf(0x1B, 0x40, 0x1B, 0x61, 0x01, 0x4B, 0x6F, 0x70, 0x69, 0x50, 0x4F, 0x53, 0x0A, 0x0A, 0x1D, 0x56, 0x00))
     fun disconnect() { runCatching { socket?.close() }; socket = null }
